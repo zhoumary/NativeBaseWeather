@@ -1,12 +1,13 @@
 import React, { Component } from "react";
-import { Image } from "react-native"
-import { Root, Container, Card, CardItem, Text, Content, Header, Left, Right, Body, Button, Icon, Title, List, ListItem } from "native-base";
+import { Image, StyleSheet, ImageBackground, Modal, View, TouchableHighlight } from "react-native";
+// import Modal from "react-native-modal";
+import { Root, Container, Card, CardItem, Text, Content, Header, Footer, Left, Right, Body, Button, Icon, Title, List, ListItem, Toast } from "native-base";
 // import { createDrawerNavigator, createStackNavigator, createAppContainer } from "react-navigation";
-import Raining from '../../pics/weather-rain-black.png';
-import Clouds from '../../pics/weather-clouds-black.png';
-import Thunderstorm from '../../pics/weather_sunderain-black.png';
-import Clear from '../../pics/clear-black.png';
-import Haze from '../../pics/haze-black.png';
+import Raining from '../../pics/weather-rain.png';
+import Clouds from '../../pics/weather-clouds.png';
+import Thunderstorm from '../../pics/weather_sunderain.png';
+import Clear from '../../pics/clear.png';
+import Haze from '../../pics/haze.png';
 import defaultBack from '../../pics/bkg11.jpg';
 import SunderRainBack from '../../pics/SunderRainBackground.gif';
 import RainBack from '../../pics/RainBackground.gif';
@@ -15,6 +16,7 @@ import RainBack from '../../pics/RainBackground.gif';
 const host = "https://api.openweathermap.org/data/2.5/";
 const apiKey = "a81a067d035dd84954e1a0d2c907e813";
 let columnCont = 1;
+let forecastWidth;
 let listWidth;
 export default class CurrWeather extends Component {
     constructor(props) {
@@ -29,7 +31,8 @@ export default class CurrWeather extends Component {
             highestTemp: null,
             lowestTemp: null,
             timeWeather: null,
-            forecasts: null
+            forecasts: null,
+            showToast: false
         };
     }    
 
@@ -54,7 +57,7 @@ export default class CurrWeather extends Component {
 
                 // for getting location
                 let location = jsonResponse.name;
-                div.push(<CardItem style={{ paddingTop: 5, paddingBottom: 5 }} key='location'><Body style={{ alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontFamily: 'Chalkduster', fontSize: 20, fontWeight: 'bold' }}>{location}</Text></Body></CardItem>);
+                div.push(<CardItem style={{ paddingTop: 5, paddingBottom: 5, backgroundColor: 'transparent', shadowOpacity: 0 }} key='location'><Body style={{ alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontFamily: 'Chalkduster', fontSize: 20, fontWeight: 'bold', color: 'white' }}>{location}</Text></Body></CardItem>);
 
                 // for getting overview weather desc
                 let weather = jsonResponse.weather;
@@ -63,7 +66,7 @@ export default class CurrWeather extends Component {
                     let current = weather[0];
                     if (current) {
                         weatDesc = current.main;
-                        div.push(<CardItem style={{ paddingTop: 5, paddingBottom: 5 }} key='weather'><Body style={{ alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontFamily: 'Chalkduster', fontSize: 20, fontWeight: 'bold' }}>{weatDesc}</Text></Body></CardItem>);
+                        div.push(<CardItem style={{ paddingTop: 5, paddingBottom: 5, backgroundColor: 'transparent', shadowOpacity: 0 }} key='weather'><Body style={{ alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontFamily: 'Chalkduster', fontSize: 20, fontWeight: 'bold', color: 'white' }}>{weatDesc}</Text></Body></CardItem>);
                     }
                 }
 
@@ -75,7 +78,7 @@ export default class CurrWeather extends Component {
                 if (main) {
                     if (main.temp) {
                         temperature = tempConversion(main.temp);
-                        div.push(<CardItem style={{ paddingTop: 5, paddingBottom: 5 }} key='temp'><Body style={{ alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontFamily: 'Chalkduster', fontSize: 20, fontWeight: 'bold' }}>{temperature}<Text style={{ fontFamily: 'Chalkduster', fontSize: 20, fontWeight: 'bold' }}>&#8451;</Text></Text></Body></CardItem>);
+                        div.push(<CardItem style={{ paddingTop: 5, paddingBottom: 5, backgroundColor: 'transparent', shadowOpacity: 0 }} key='temp'><Body style={{ alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontFamily: 'Chalkduster', fontSize: 20, fontWeight: 'bold', color: 'white' }}>{temperature}<Text style={{ fontFamily: 'Chalkduster', fontSize: 20, fontWeight: 'bold', color: 'white' }}>&#8451;</Text></Text></Body></CardItem>);
                     }
                     if (main.temp_min) {
                         temp_min = tempConversion(main.temp_min);
@@ -269,7 +272,7 @@ export default class CurrWeather extends Component {
                                     let weatImage;
                                     if (weatDesc) {
                                         weatImage = weatherConversion(weatDesc);
-                                        forecastData.push(weatDesc);
+                                        forecastData.push(weatImage);
                                         // forecastData.push(weatImage);
                                         forecastData.push(highestTemp);
                                         forecastData.push(lowestTemp);
@@ -303,74 +306,193 @@ export default class CurrWeather extends Component {
     }
 
 
+    getNextWeekDay(i) {
+        const day = new Date();
+        const weeklyNum = day.getDay();
+        var weekday = new Array(7);
+        weekday[1] = "Mon.";
+        weekday[2] = "Tue.";
+        weekday[3] = "Wed.";
+        weekday[4] = "Thur.";
+        weekday[5] = "Fri.";
+        weekday[6] = "Sat.";
+        weekday[0] = "Sun.";
+        let x = weeklyNum + i + 1;
+        if (x > 6) {
+            x = x % 7;
+        }
+        return weekday[x];
+    }
+
+
     renderWeather(weather, idx) {
         return (
             <List key={idx} style={{width: listWidth}}>
                 <ListItem style={{
-                    marginLeft: 5, borderColor: '#fff', paddingTop: 10, paddingBottom: 10, paddingRight: 10, justifyContent: 'center' }}>
-                    <Text style={{ fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold' }}>{weather[0]}</Text>
+                    marginLeft: 5, borderColor: 'transparent', paddingTop: 10, paddingBottom: 10, paddingRight: 10, justifyContent: 'center' }}>
+                    <Text style={{ fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold', color: 'white' }}>{weather[0]}</Text>
                 </ListItem>
                     <ListItem style={{
-                        marginLeft: 5, borderColor: '#fff', paddingTop: 10, paddingBottom: 10, paddingRight: 10, justifyContent: 'center' }}>
+                    marginLeft: 5, borderColor: 'transparent', paddingTop: 10, paddingBottom: 10, paddingRight: 10, justifyContent: 'center' }}>
                     <Image style={{ width: 30, height: 30 }} source={weather[1]} />
                 </ListItem>
                     <ListItem style={{
-                        marginLeft: 5, borderColor: '#fff', paddingTop: 10, paddingBottom: 10, paddingRight: 10, justifyContent: 'center' }}>
-                    <Text style={{ fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold' }}>{weather[2]}<Text style={{ fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold' }}>&#8451;</Text></Text>
+                    marginLeft: 5, borderColor: 'transparent', paddingTop: 10, paddingBottom: 10, paddingRight: 10, justifyContent: 'center' }}>
+                    <Text style={{ fontFamily: 'Chalkduster', fontSize: 12, fontWeight: 'bold', color: 'white' }}>{weather[2]}<Text style={{ fontFamily: 'Chalkduster', fontSize: 10, fontWeight: 'bold', color: 'white' }}>&#8451;</Text></Text>
                 </ListItem>
             </List>
         );
     }
 
 
+    renderForecasts(forecast, idx) {
+        return (
+            <CardItem key={idx} style={{ backgroundColor: 'transparent', shadowOpacity: 0 }}>
+                <Text style={{ fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold', width: forecastWidth, color: 'white' }}>{forecast[0]}</Text>
+                <Text style={{ width: forecastWidth }}><Image style={{ width: 30, height: 30 }} source={forecast[1]} /></Text>
+                <Text style={{ fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold', width: forecastWidth, color: 'white' }}>{forecast[2]}<Text style={{ fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold', color: 'white' }}>&#8451;</Text></Text>
+                <Text style={{ fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold', width: forecastWidth, color: 'white' }}>{forecast[3]}<Text style={{ fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold', color: 'white' }}>&#8451;</Text></Text>
+            </CardItem>
+        );
+    }
+
+
     render() {
-        if (!this.state.location || !this.state.weather || !this.state.temp || !this.state.timeWeather) {
+        if (!this.state.location || !this.state.weather || !this.state.temp || !this.state.timeWeather || !this.state.forecasts) {
             return <Container />
         }
         
         const timeWeathers = this.state.timeWeather;
+        let forecasts = this.state.forecasts;
+        if (forecasts) {
+            forecasts.map((forecast, x) => {
+                forecast.unshift(this.getNextWeekDay(x));
+                }
+            );
+        }
+        if (this.state.forecasts) {
+            forecastWidth = (100 / 4).toFixed(2) + '%';
+        }
         if (columnCont && this.state.timeWeather) {
             listWidth = (100 / columnCont).toFixed(2) + '%';
         }
+
+
+        let currBackImage;
+        if (this.state.currentWeather) {
+            let currWeatDesc = this.state.currentWeather;
+            let weatConvred = currWeatConversion(currWeatDesc);
+            if (weatConvred) {
+                //currBackImage = `url(${weatConvred})`;
+                currBackImage = weatConvred;
+            }
+        } else {
+            //currBackImage = `url(${defaultBack})`;
+            currBackImage = defaultBack;
+        }
+
+        
+
+
         return (
-            <Container>
-                <Header transparent style={{height: 10}}/>
-                <Content padder>
-                    <Card transparent>
-                        {this.state.weatherInfo}
-                        <CardItem bordered style={{ paddingLeft: 2, paddingRight: 2  }}>
-                            <Left style={{ paddingTop: 5, paddingBottom: 5 }}>
-                                <Text style={{ marginLeft: 5, fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold' }}>
-                                    {this.getWeekDay()}
-                                </Text>
-                                <Text style={{ marginLeft: 5, fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold' }}>
-                                    Today
-                                </Text>
-                            </Left>
-                            <Right style={{ paddingTop: 5, paddingBottom: 5, flexDirection: 'row' }}>
-                                <Text style={{ fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold' }}>
-                                    {this.state.highestTemp}<Text style={{ fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold' }}>&#8451;</Text>
-                                </Text>
-                                <Text style={{ marginLeft: 5, fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold' }}>
-                                    {this.state.lowestTemp}<Text style={{ fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold' }}>&#8451;</Text>
-                                </Text>
-                            </Right>
-                        </CardItem>
-                        <CardItem bordered style={{paddingLeft:5, paddingRight:5}}>
-                            <Content contentContainerStyle={{flexDirection: 'row'}}>
+            <Root style={{ flexDirection: 'cloumn' }}>
+                <Container style={{ flexDirection: 'cloumn' }}>
+                    <ImageBackground source={currBackImage} style={styles.backgroundImage}>
+                        <Content>
+                            <Header transparent style={{ height: 10 }} />
+                            <Card style={{ backgroundColor: 'transparent', shadowOpacity: 0, borderColor: 'transparent', shadowOpacity: 0 }}>
+                                {this.state.weatherInfo}
+                                <CardItem bordered style={{ paddingLeft: 2, paddingRight: 2, backgroundColor: 'transparent', shadowOpacity: 0 }}>
+                                    <Left style={{ paddingTop: 5, paddingBottom: 5 }}>
+                                        <Text style={{ marginLeft: 5, fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold', color: 'white' }}>
+                                            {this.getWeekDay()}
+                                        </Text>
+                                        <Text style={{ marginLeft: 5, fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold', color: 'white' }}>
+                                            Today
+                                        </Text>
+                                    </Left>
+                                    <Right style={{ paddingTop: 5, paddingBottom: 5, flexDirection: 'row' }}>
+                                        <Text style={{ fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold', color: 'white' }}>
+                                            {this.state.highestTemp}<Text style={{ fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold', color: 'white' }}>&#8451;</Text>
+                                        </Text>
+                                        <Text style={{ marginLeft: 5, fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold', color: 'white' }}>
+                                            {this.state.lowestTemp}<Text style={{ fontFamily: 'Chalkduster', fontSize: 15, fontWeight: 'bold', color: 'white' }}>&#8451;</Text>
+                                        </Text>
+                                    </Right>
+                                </CardItem>
+                                <CardItem bordered style={{ paddingLeft: 5, paddingRight: 5, backgroundColor: 'transparent', shadowOpacity: 0 }}>
+                                    <Content contentContainerStyle={{ flexDirection: 'row' }}>
+                                        {
+                                            timeWeathers.map((item, idx) => { // This will render a row for each data element.
+                                                return this.renderWeather(item, idx);
+                                            })
+                                        }
+                                    </Content>
+                                </CardItem>
                                 {
-                                    timeWeathers.map((item, idx) => { // This will render a row for each data element.
-                                        return this.renderWeather(item, idx);
+                                    forecasts.map((item, idx) => { // This will render a row for each data element.
+                                        return this.renderForecasts(item, idx);
                                     })
                                 }
-                            </Content>
-                        </CardItem>
-                    </Card>
-                </Content>
-            </Container>
+                            </Card>
+
+                            <Footer style={{ paddingLeft: 5, paddingRight: 5, backgroundColor: 'transparent', shadowOpacity: 0 }}>
+                                <Right>
+                                    <Button transparent onPress={() => {
+                                        return (
+                                            <View style={{ marginTop: 22 }}>
+                                                <Modal
+                                                    animationType="slide"
+                                                    transparent={false}
+                                                    visible={this.state.modalVisible}
+                                                    onRequestClose={() => {
+                                                        Alert.alert('Modal has been closed.');
+                                                    }}>
+                                                    <View style={{ marginTop: 22 }}>
+                                                        <View>
+                                                            <Text>Hello World!</Text>
+
+                                                            <TouchableHighlight
+                                                                onPress={() => {
+                                                                    this.setModalVisible(!this.state.modalVisible);
+                                                                }}>
+                                                                <Text>Hide Modal</Text>
+                                                            </TouchableHighlight>
+                                                        </View>
+                                                    </View>
+                                                </Modal>
+
+                                                <TouchableHighlight
+                                                    onPress={() => {
+                                                        this.setModalVisible(true);
+                                                    }}>
+                                                    <Text>Show Modal</Text>
+                                                </TouchableHighlight>
+                                            </View>
+                                        );
+                                    }}>
+                                        <Icon name='list' ios="ios-list" style={{ color: '#fff' }} />
+                                    </Button>
+                                </Right>
+                            </Footer>
+
+                        </Content>
+                    </ImageBackground>
+                </Container>                
+            </Root>
+
         );
     }
 }
+
+
+let styles = StyleSheet.create({
+    backgroundImage: {
+        // flex: 1,
+        resizeMode: 'cover', // or 'stretch'
+        width: '100%', height: '100%'
+    }
+});
 
 
 function tempConversion(kTemp) {
